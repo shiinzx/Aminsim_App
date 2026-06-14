@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:geolocator/geolocator.dart';
 import 'asmaul_husna_page.dart';
 import 'doa_page.dart';
 import 'hadith_page.dart';
@@ -26,7 +27,7 @@ class _MenuPageState extends State<MenuPage> {
   String _nextPrayerName = "";
   String _dateString = "";
   String _cityString = "Cianjur, Indonesia";
-  final String _cityId = "1205"; // Default city ID for Cianjur in myquran API
+  String _cityId = "1206"; // Default city ID for Kabupaten Cianjur in myquran API
   Map<String, dynamic> todaySchedule = {};
   bool isLoadingPrayer = true;
 
@@ -37,8 +38,38 @@ class _MenuPageState extends State<MenuPage> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _updateTimeAndCountdown();
     });
-    // Run once initially to avoid blank values before first tick
     _updateTimeAndCountdown();
+  }
+
+  Future<Position?> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return null;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return null;
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      return null;
+    }
+
+    try {
+      return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low,
+        timeLimit: const Duration(seconds: 5),
+      );
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<void> _fetchTodayPrayerTimes() async {
@@ -47,6 +78,41 @@ class _MenuPageState extends State<MenuPage> {
     final month = now.month.toString().padLeft(2, '0');
     final day = now.day.toString().padLeft(2, '0');
 
+    // Try to get GPS coordinates and resolve the nearest city
+    final Position? position = await _determinePosition();
+    if (position != null) {
+      try {
+        final url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.latitude}&lon=${position.longitude}&zoom=10';
+        final geoResponse = await http.get(
+          Uri.parse(url),
+          headers: {'User-Agent': 'AminsimApp/1.0'},
+        );
+        if (geoResponse.statusCode == 200) {
+          final geoData = json.decode(geoResponse.body);
+          final address = geoData['address'] ?? {};
+          String detectedCity = address['county'] ?? address['city'] ?? address['town'] ?? address['municipality'] ?? address['state_district'] ?? 'Cianjur';
+          
+          // Clean the name: e.g. "Kabupaten Cianjur" -> "Cianjur"
+          detectedCity = detectedCity
+              .replaceAll(RegExp(r'(Kabupaten|Kab\.|Kota|Kecamatan|District)\s*', caseSensitive: false), '')
+              .trim();
+
+          // Search the city ID on myquran
+          final searchResponse = await http.get(Uri.parse('https://api.myquran.com/v2/sholat/kota/cari/$detectedCity'));
+          if (searchResponse.statusCode == 200) {
+            final searchData = json.decode(searchResponse.body);
+            if (searchData['status'] == true && searchData['data'] != null && (searchData['data'] as List).isNotEmpty) {
+              _cityId = searchData['data'][0]['id'];
+              _cityString = "${searchData['data'][0]['lokasi']}, Indonesia";
+            }
+          }
+        }
+      } catch (e) {
+        // Log or handle geo lookup failures silently, falling back to default city ID (Cianjur)
+      }
+    }
+
+    // Load schedule for the resolved city ID
     try {
       final response = await http.get(Uri.parse('https://api.myquran.com/v2/sholat/jadwal/$_cityId/$year/$month/$day'));
       if (response.statusCode == 200) {
@@ -63,7 +129,6 @@ class _MenuPageState extends State<MenuPage> {
         }
       }
     } catch (e) {
-      // Offline fallback
       if (mounted) {
         setState(() {
           todaySchedule = _staticBackupSchedule;
@@ -114,7 +179,6 @@ class _MenuPageState extends State<MenuPage> {
         }
       }
 
-      // If past Isya, next is tomorrow's Subuh
       if (nextPrayer == null && subuhTime != null) {
         final tomorrowSubuh = subuhTime.add(const Duration(days: 1));
         nextPrayer = MapEntry('Subuh', tomorrowSubuh);
@@ -154,7 +218,6 @@ class _MenuPageState extends State<MenuPage> {
       "Januari", "Februari", "Maret", "April", "Mei", "Juni",
       "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ];
-    // weekday is 1 = Monday, 7 = Sunday. Sunday offset is 0.
     final dayName = days[date.weekday % 7];
     final monthName = months[date.month - 1];
     return "$dayName, ${date.day} $monthName ${date.year}";
@@ -200,7 +263,6 @@ class _MenuPageState extends State<MenuPage> {
                 ),
                 const SizedBox(height: 15),
                 
-                // --- BAGIAN SLIDE TRACKER ---
                 SizedBox(
                   height: 160,
                   child: PageView(
@@ -219,7 +281,6 @@ class _MenuPageState extends State<MenuPage> {
     );
   }
 
-  // Widget untuk Kartu Tracker yang bisa di-slide
   Widget _buildTrackerSlide(String day) {
     return Container(
       margin: const EdgeInsets.only(right: 10),
