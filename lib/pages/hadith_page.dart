@@ -26,11 +26,11 @@ class _HadithPageState extends State<HadithPage> {
       errorMessage = "";
     });
     try {
-      final response = await http.get(Uri.parse('https://api.hadith.gading.dev/books'));
+      final response = await http.get(Uri.parse('https://hadis-api-id.vercel.app/hadith'));
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> responseData = json.decode(response.body);
         setState(() {
-          books = responseData['data'] ?? [];
+          books = responseData;
           isLoading = false;
         });
       } else {
@@ -87,6 +87,10 @@ class _HadithPageState extends State<HadithPage> {
                   itemCount: books.length,
                   itemBuilder: (context, index) {
                     final book = books[index];
+                    final String name = book['name'] ?? '';
+                    final String slug = book['slug'] ?? '';
+                    final int total = book['total'] ?? 0;
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 15),
                       elevation: 2,
@@ -100,20 +104,20 @@ class _HadithPageState extends State<HadithPage> {
                           width: 45,
                           height: 45,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF062743).withOpacity(0.1),
+                            color: const Color(0xFF062743).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.book, color: Color(0xFF062743)),
                         ),
                         title: Text(
-                          book['name'] ?? '',
+                          name,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF062743),
                           ),
                         ),
                         subtitle: Text(
-                          "Total: ${book['available'] ?? 0} Hadist",
+                          "Total: $total Hadist",
                           style: const TextStyle(color: Colors.grey),
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
@@ -122,9 +126,9 @@ class _HadithPageState extends State<HadithPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => HadithBrowserPage(
-                                bookId: book['id'] ?? book['name'].toString().toLowerCase(),
-                                bookName: book['name'] ?? '',
-                                totalHadiths: book['available'] ?? 100,
+                                bookId: slug,
+                                bookName: name,
+                                totalHadiths: total,
                               ),
                             ),
                           );
@@ -137,12 +141,15 @@ class _HadithPageState extends State<HadithPage> {
   }
 
   static const List<Map<String, dynamic>> _staticBackupBooks = [
-    {"id": "bukhari", "name": "Bukhari", "available": 7008},
-    {"id": "muslim", "name": "Muslim", "available": 5362},
-    {"id": "tirmidzi", "name": "Tirmidzi", "available": 3891},
-    {"id": "nasai", "name": "Nasai", "available": 5662},
-    {"id": "abu-daud", "name": "Abu Daud", "available": 4419},
-    {"id": "ibnu-majah", "name": "Ibnu Majah", "available": 4285},
+    {"slug": "bukhari", "name": "Bukhari", "total": 6638},
+    {"slug": "muslim", "name": "Muslim", "total": 4930},
+    {"slug": "tirmidzi", "name": "Tirmidzi", "total": 3625},
+    {"slug": "nasai", "name": "Nasai", "total": 5364},
+    {"slug": "abu-dawud", "name": "Abu Dawud", "total": 4419},
+    {"slug": "ibnu-majah", "name": "Ibnu Majah", "total": 4285},
+    {"slug": "ahmad", "name": "Ahmad", "total": 4305},
+    {"slug": "darimi", "name": "Darimi", "total": 2949},
+    {"slug": "malik", "name": "Malik", "total": 1587},
   ];
 }
 
@@ -163,8 +170,8 @@ class HadithBrowserPage extends StatefulWidget {
 }
 
 class _HadithBrowserPageState extends State<HadithBrowserPage> {
-  int startRange = 1;
-  int endRange = 20;
+  int currentPage = 1;
+  static const int limit = 20;
   List<dynamic> hadiths = [];
   bool isLoading = false;
   String errorMessage = "";
@@ -182,11 +189,11 @@ class _HadithBrowserPageState extends State<HadithBrowserPage> {
     });
     try {
       final response = await http.get(Uri.parse(
-          'https://api.hadith.gading.dev/books/${widget.bookId}?range=$startRange-$endRange'));
+          'https://hadis-api-id.vercel.app/hadith/${widget.bookId}?page=$currentPage&limit=$limit'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
         setState(() {
-          hadiths = responseData['data']['hadiths'] ?? [];
+          hadiths = responseData['items'] ?? [];
           isLoading = false;
         });
       } else {
@@ -197,6 +204,7 @@ class _HadithBrowserPageState extends State<HadithBrowserPage> {
       }
     } catch (e) {
       // Offline fallback simulations
+      final startRange = (currentPage - 1) * limit + 1;
       setState(() {
         hadiths = [
           {
@@ -211,20 +219,19 @@ class _HadithBrowserPageState extends State<HadithBrowserPage> {
   }
 
   void _nextPage() {
-    if (endRange < widget.totalHadiths) {
+    final maxPages = (widget.totalHadiths / limit).ceil();
+    if (currentPage < maxPages) {
       setState(() {
-        startRange += 20;
-        endRange = (endRange + 20 > widget.totalHadiths) ? widget.totalHadiths : endRange + 20;
+        currentPage++;
       });
       fetchHadiths();
     }
   }
 
   void _prevPage() {
-    if (startRange > 1) {
+    if (currentPage > 1) {
       setState(() {
-        endRange = startRange - 1;
-        startRange = (startRange - 20 < 1) ? 1 : startRange - 20;
+        currentPage--;
       });
       fetchHadiths();
     }
@@ -232,6 +239,10 @@ class _HadithBrowserPageState extends State<HadithBrowserPage> {
 
   @override
   Widget build(BuildContext context) {
+    final startRange = (currentPage - 1) * limit + 1;
+    final endRange = (currentPage * limit > widget.totalHadiths) ? widget.totalHadiths : currentPage * limit;
+    final maxPages = (widget.totalHadiths / limit).ceil();
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -256,7 +267,7 @@ class _HadithBrowserPageState extends State<HadithBrowserPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  onPressed: startRange > 1 ? _prevPage : null,
+                  onPressed: currentPage > 1 ? _prevPage : null,
                   icon: const Icon(Icons.arrow_back_ios),
                   color: const Color(0xFF062743),
                 ),
@@ -265,7 +276,7 @@ class _HadithBrowserPageState extends State<HadithBrowserPage> {
                   style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF062743)),
                 ),
                 IconButton(
-                  onPressed: endRange < widget.totalHadiths ? _nextPage : null,
+                  onPressed: currentPage < maxPages ? _nextPage : null,
                   icon: const Icon(Icons.arrow_forward_ios),
                   color: const Color(0xFF062743),
                 ),
