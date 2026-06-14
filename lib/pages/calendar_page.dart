@@ -185,7 +185,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     color: isToday
                         ? const Color(0xFF062743)
                         : isHoliday
-                            ? Colors.red.withOpacity(0.1)
+                            ? Colors.red.withValues(alpha: 0.1)
                             : Colors.transparent,
                     shape: BoxShape.circle,
                     border: isHoliday ? Border.all(color: Colors.red, width: 1) : null,

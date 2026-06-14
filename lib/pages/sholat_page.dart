@@ -100,22 +100,24 @@ class _SholatPageState extends State<SholatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0A0F24),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0A0F24),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF062743)),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: const Text(
           "Jadwal Sholat",
-          style: TextStyle(color: Color(0xFF062743), fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(isSearching ? Icons.close : Icons.search, color: const Color(0xFF062743)),
+            icon: Icon(isSearching ? Icons.close : Icons.search, color: Colors.white),
             onPressed: () {
               setState(() {
                 isSearching = !isSearching;
@@ -137,11 +139,13 @@ class _SholatPageState extends State<SholatPage> {
               child: TextField(
                 controller: _citySearchController,
                 onChanged: searchCity,
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: "Enter city name (e.g. Jakarta, Cianjur)",
-                  prefixIcon: const Icon(Icons.location_city, color: Colors.grey),
+                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  prefixIcon: const Icon(Icons.location_city, color: Color(0xFF3B82F6)),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: const Color(0xFF132235),
                   contentPadding: const EdgeInsets.symmetric(vertical: 0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
@@ -158,8 +162,8 @@ class _SholatPageState extends State<SholatPage> {
                   itemBuilder: (context, index) {
                     final city = searchResults[index];
                     return ListTile(
-                      title: Text(city['lokasi'] ?? ''),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      title: Text(city['lokasi'] ?? '', style: const TextStyle(color: Colors.white)),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white70),
                       onTap: () {
                         fetchPrayerTimes(city['id']);
                       },
@@ -171,7 +175,7 @@ class _SholatPageState extends State<SholatPage> {
           if (!isSearching || searchResults.isEmpty)
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF062743))))
+                  ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6))))
                   : errorMessage.isNotEmpty
                       ? Center(
                           child: Column(
@@ -181,7 +185,7 @@ class _SholatPageState extends State<SholatPage> {
                               const SizedBox(height: 15),
                               ElevatedButton(
                                 onPressed: () => fetchPrayerTimes(currentCityId),
-                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF062743)),
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)),
                                 child: const Text("Retry", style: TextStyle(color: Colors.white)),
                               ),
                             ],
@@ -189,7 +193,7 @@ class _SholatPageState extends State<SholatPage> {
                         )
                       : RefreshIndicator(
                           onRefresh: () => fetchPrayerTimes(currentCityId),
-                          color: const Color(0xFF062743),
+                          color: const Color(0xFF3B82F6),
                           child: ListView(
                             padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
                             children: [
@@ -197,13 +201,14 @@ class _SholatPageState extends State<SholatPage> {
                               Container(
                                 padding: const EdgeInsets.all(25),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF062743),
+                                  color: const Color(0xFF132235),
                                   borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                                   boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
                                 ),
                                 child: Column(
                                   children: [
-                                    const Icon(Icons.location_on, color: Colors.amber, size: 30),
+                                    const Icon(Icons.location_on, color: Color(0xFF3B82F6), size: 30),
                                     const SizedBox(height: 10),
                                     Text(
                                       currentCity.toUpperCase(),
@@ -218,7 +223,7 @@ class _SholatPageState extends State<SholatPage> {
                                     const SizedBox(height: 5),
                                     Text(
                                       todaySchedule['tanggal'] ?? '',
-                                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                      style: TextStyle(color: Colors.grey[400], fontSize: 13),
                                     ),
                                   ],
                                 ),
@@ -226,7 +231,7 @@ class _SholatPageState extends State<SholatPage> {
                               const SizedBox(height: 25),
                               const Text(
                                 "Today's Schedule",
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF062743)),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                               ),
                               const SizedBox(height: 15),
                               // Prayer list
@@ -248,12 +253,12 @@ class _SholatPageState extends State<SholatPage> {
   }
 
   Widget _prayerTimeTile(String title, String time) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 1,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: const Color(0xFF132235),
         borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -265,7 +270,7 @@ class _SholatPageState extends State<SholatPage> {
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
-                color: Color(0xFF062743),
+                color: Colors.white,
               ),
             ),
             Row(
@@ -275,14 +280,14 @@ class _SholatPageState extends State<SholatPage> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.amber,
+                    color: Color(0xFF3B82F6),
                   ),
                 ),
                 const SizedBox(width: 10),
-                Icon(
+                const Icon(
                   Icons.alarm,
                   size: 16,
-                  color: Colors.grey[400],
+                  color: Color(0xFF3B82F6),
                 ),
               ],
             )

@@ -118,7 +118,7 @@ class _TasbihPageState extends State<TasbihPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
-                      border: Border.all(color: const Color(0xFFBCCBCF).withOpacity(0.3), width: 4),
+                      border: Border.all(color: const Color(0xFFBCCBCF).withValues(alpha: 0.3), width: 4),
                       boxShadow: const [
                         BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 5))
                       ],

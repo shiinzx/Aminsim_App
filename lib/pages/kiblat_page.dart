@@ -18,17 +18,19 @@ class _KiblatPageState extends State<KiblatPage> {
     double relativeAngle = (_qiblaAngle - _heading) * (math.pi / 180);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0A0F24),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0A0F24),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF062743)),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: const Text(
           "Arah Kiblat",
-          style: TextStyle(color: Color(0xFF062743), fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -42,8 +44,9 @@ class _KiblatPageState extends State<KiblatPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF062743),
+                color: const Color(0xFF132235),
                 borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                 boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
               ),
               child: Column(
@@ -88,8 +91,8 @@ class _KiblatPageState extends State<KiblatPage> {
                       height: 280,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.grey[100],
-                        border: Border.all(color: const Color(0xFF062743).withOpacity(0.2), width: 8),
+                        color: const Color(0xFF132235),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 8),
                         boxShadow: const [
                           BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 5))
                         ],
@@ -114,7 +117,7 @@ class _KiblatPageState extends State<KiblatPage> {
                               padding: EdgeInsets.all(12),
                               child: Text(
                                 "S",
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF062743)),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white70),
                               ),
                             ),
                           ),
@@ -125,7 +128,7 @@ class _KiblatPageState extends State<KiblatPage> {
                               padding: EdgeInsets.all(12),
                               child: Text(
                                 "E",
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF062743)),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white70),
                               ),
                             ),
                           ),
@@ -136,7 +139,7 @@ class _KiblatPageState extends State<KiblatPage> {
                               padding: EdgeInsets.all(12),
                               child: Text(
                                 "W",
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF062743)),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white70),
                               ),
                             ),
                           ),
@@ -147,7 +150,7 @@ class _KiblatPageState extends State<KiblatPage> {
                               alignment: Alignment.topCenter,
                               child: Padding(
                                 padding: EdgeInsets.only(top: 45),
-                                child: Icon(Icons.mosque, color: Colors.amber, size: 24),
+                                child: Icon(Icons.mosque, color: Color(0xFF3B82F6), size: 24),
                               ),
                             ),
                           ),
@@ -170,7 +173,7 @@ class _KiblatPageState extends State<KiblatPage> {
                               width: 6,
                               height: 90,
                               decoration: BoxDecoration(
-                                color: Colors.amber,
+                                color: const Color(0xFF3B82F6),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                             ),
@@ -183,7 +186,7 @@ class _KiblatPageState extends State<KiblatPage> {
                               height: 14,
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.amber,
+                                color: Color(0xFF3B82F6),
                               ),
                               child: const Icon(
                                 Icons.keyboard_arrow_up,
@@ -202,7 +205,7 @@ class _KiblatPageState extends State<KiblatPage> {
                     width: 25,
                     height: 25,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF062743),
+                      color: Color(0xFF0A0F24),
                       shape: BoxShape.circle,
                       boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
                     ),
@@ -217,8 +220,8 @@ class _KiblatPageState extends State<KiblatPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
                 color: (relativeAngle.abs() % (2 * math.pi) < 0.05 || (relativeAngle.abs() % (2 * math.pi) - 2 * math.pi).abs() < 0.05)
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.amber.withOpacity(0.1),
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Text(
@@ -229,7 +232,7 @@ class _KiblatPageState extends State<KiblatPage> {
                   fontWeight: FontWeight.bold,
                   color: (relativeAngle.abs() % (2 * math.pi) < 0.05 || (relativeAngle.abs() % (2 * math.pi) - 2 * math.pi).abs() < 0.05)
                       ? Colors.green
-                      : const Color(0xFF062743),
+                      : Colors.white70,
                 ),
               ),
             ),
