@@ -49,10 +49,12 @@ class _QuranPageState extends State<QuranPage> with TickerProviderStateMixin {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: const Text(
           "Read Quran",
           style: TextStyle(color: Color(0xFF1E5BB0), fontWeight: FontWeight.bold),
