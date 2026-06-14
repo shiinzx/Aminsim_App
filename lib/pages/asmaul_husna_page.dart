@@ -31,8 +31,6 @@ class _AsmaulHusnaPageState extends State<AsmaulHusnaPage> {
       final response = await http.get(Uri.parse('https://asmaul-husna-api.vercel.app/api/all'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
-        // Sometimes APIs return the list under 'data' or directly as a list or map.
-        // Let's handle both possible structures robustly.
         final List<dynamic> data = responseData['data'] ?? [];
         setState(() {
           allNames = data;
@@ -74,17 +72,17 @@ class _AsmaulHusnaPageState extends State<AsmaulHusnaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0F1621), // Premium dark background
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0F1621),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF062743)),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.amber),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Asmaul Husna",
-          style: TextStyle(color: Color(0xFF062743), fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2),
         ),
         centerTitle: true,
       ),
@@ -96,122 +94,136 @@ class _AsmaulHusnaPageState extends State<AsmaulHusnaPage> {
             child: TextField(
               controller: _searchController,
               onChanged: _filterNames,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "Search name or meaning...",
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                hintStyle: const TextStyle(color: Colors.white60, fontSize: 14),
+                prefixIcon: const Icon(Icons.search, color: Colors.amber),
                 filled: true,
-                fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                fillColor: const Color(0xFF181F2B),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: const BorderSide(color: Colors.amber, width: 1),
                 ),
               ),
             ),
           ),
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF062743))))
+                ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.amber)))
                 : errorMessage.isNotEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(errorMessage, style: const TextStyle(color: Colors.red)),
+                            Text(errorMessage, style: const TextStyle(color: Colors.redAccent)),
                             const SizedBox(height: 15),
                             ElevatedButton(
                               onPressed: fetchAsmaulHusna,
-                              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF062743)),
-                              child: const Text("Retry", style: TextStyle(color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.amber,
+                                foregroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: const Text("Retry", style: TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
                       )
                     : filteredNames.isEmpty
-                        ? const Center(child: Text("No names match your search"))
+                        ? const Center(child: Text("No names match your search", style: TextStyle(color: Colors.white70)))
                         : GridView.builder(
                             padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 12,
                               mainAxisSpacing: 12,
-                              childAspectRatio: 1.1,
+                              childAspectRatio: 1.15,
                             ),
                             itemCount: filteredNames.length,
                             itemBuilder: (context, index) {
                               final item = filteredNames[index];
-                              return Card(
-                                elevation: 2,
-                                shadowColor: Colors.black12,
-                                shape: RoundedRectangleBorder(
+                              final number = item['urutan'] ?? (index + 1);
+                              final arab = item['arab'] ?? '';
+                              final latin = item['latin'] ?? '';
+                              final arti = item['arti'] ?? '';
+
+                              return Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF181F2B),
                                   borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
                                 ),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.grey[100]!),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // Number circle
-                                      Align(
-                                        alignment: Alignment.topLeft,
-                                        child: Container(
-                                          width: 24,
-                                          height: 24,
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFFBCCBCF),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              "${item['urutan'] ?? (index + 1)}",
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFF062743),
-                                              ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // Number badge
+                                    Align(
+                                      alignment: Alignment.topLeft,
+                                      child: Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.amber,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            "$number",
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF0F1621),
                                             ),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
-                                      // Arabic Name
-                                      Text(
-                                        item['arab'] ?? '',
-                                        style: const TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF062743),
-                                        ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    // Arabic Name
+                                    Text(
+                                      arab,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
                                       ),
-                                      const SizedBox(height: 4),
-                                      // Latin
-                                      Text(
-                                        item['latin'] ?? '',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.amber,
-                                        ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    // Latin Name
+                                    Text(
+                                      latin,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber,
                                       ),
-                                      const SizedBox(height: 2),
-                                      // Translation
-                                      Text(
-                                        item['arti'] ?? '',
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.grey,
-                                        ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    // Translation
+                                    Text(
+                                      arti,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey[400],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               );
                             },

@@ -10,6 +10,7 @@ import 'sholat_page.dart';
 import 'kiblat_page.dart';
 import 'tasbih_page.dart';
 import 'calendar_page.dart';
+import 'alif_ba_ta_page.dart';
 
 class MenuPage extends StatefulWidget {
   final VoidCallback? onQuranTap;
@@ -22,7 +23,7 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> {
   bool isExpanded = false;
   Timer? _timer;
-  String _timeString = "-- : --";
+  String _timeString = "--:--:-- --";
   String _countdownString = "--:--:--";
   String _nextPrayerName = "";
   String _dateString = "";
@@ -108,7 +109,7 @@ class _MenuPageState extends State<MenuPage> {
           }
         }
       } catch (e) {
-        // Fallback silently to default city ID
+        // Fallback silently
       }
     }
 
@@ -149,11 +150,15 @@ class _MenuPageState extends State<MenuPage> {
     try {
       final now = DateTime.now();
       
-      // Clock update
-      final hour = now.hour.toString().padLeft(2, '0');
-      final minute = now.minute.toString().padLeft(2, '0');
-      final colon = now.second % 2 == 0 ? " : " : "   ";
-      final timeStr = "$hour$colon$minute";
+      // Clock update with seconds and AM/PM
+      final hourInt = now.hour;
+      final isAm = hourInt < 12;
+      final displayHour = hourInt == 0 ? 12 : (hourInt > 12 ? hourInt - 12 : hourInt);
+      final hourStr = displayHour.toString().padLeft(2, '0');
+      final minuteStr = now.minute.toString().padLeft(2, '0');
+      final secondStr = now.second.toString().padLeft(2, '0');
+      final ampm = isAm ? "am" : "pm";
+      final timeStr = "$hourStr:$minuteStr:$secondStr $ampm";
 
       // Date update
       final dateStr = _getFormattedDate(now);
@@ -235,6 +240,46 @@ class _MenuPageState extends State<MenuPage> {
     return "$dayName, ${date.day} $monthName ${date.year}";
   }
 
+  Map<String, String> _getActivePrayerInfo() {
+    final defaultInfo = {"name": "Dhuhur", "range": "11:52 - 15:10"};
+    if (todaySchedule.isEmpty) return defaultInfo;
+
+    try {
+      final now = DateTime.now();
+      final String subuh = todaySchedule['subuh'] ?? '04:42';
+      final String dzuhur = todaySchedule['dzuhur'] ?? '11:52';
+      final String ashar = todaySchedule['ashar'] ?? '15:10';
+      final String magrib = todaySchedule['magrib'] ?? '17:51';
+      final String isya = todaySchedule['isya'] ?? '19:01';
+
+      final tSubuh = _parseTime(subuh, now);
+      final tDzuhur = _parseTime(dzuhur, now);
+      final tAshar = _parseTime(ashar, now);
+      final tMagrib = _parseTime(magrib, now);
+      final tIsya = _parseTime(isya, now);
+
+      if (tSubuh == null || tDzuhur == null || tAshar == null || tMagrib == null || tIsya == null) {
+        return defaultInfo;
+      }
+
+      if (now.isBefore(tSubuh)) {
+        return {"name": "Isya", "range": "$isya - $subuh"};
+      } else if (now.isBefore(tDzuhur)) {
+        return {"name": "Subuh", "range": "$subuh - $tDzuhur"};
+      } else if (now.isBefore(tAshar)) {
+        return {"name": "Dzuhur", "range": "$dzuhur - $ashar"};
+      } else if (now.isBefore(tMagrib)) {
+        return {"name": "Ashar", "range": "$ashar - $magrib"};
+      } else if (now.isBefore(tIsya)) {
+        return {"name": "Magrib", "range": "$magrib - $isya"};
+      } else {
+        return {"name": "Isya", "range": "$isya - $subuh"};
+      }
+    } catch (e) {
+      return defaultInfo;
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -243,53 +288,66 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildHeader(),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildExpandableMenu(),
-                const SizedBox(height: 30),
-                const Text(
-                  "Jadwal Sholat",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF062743),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF0F172A),
+            Color(0xFF070B16),
+          ],
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildExpandableMenu(),
+                  const SizedBox(height: 25),
+                  const Text(
+                    "Jadwal Sholat",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 15),
-                _buildPrayerTimesRow(),
-                const SizedBox(height: 30),
-                const Text(
-                  "Prayer Tracker",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF062743),
+                  const SizedBox(height: 12),
+                  _buildPrayerTimesRow(),
+                  const SizedBox(height: 12),
+                  _buildExtraTimesRow(),
+                  const SizedBox(height: 25),
+                  const Text(
+                    "Prayer Tracker",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 15),
-                
-                SizedBox(
-                  height: 160,
-                  child: PageView(
-                    controller: PageController(viewportFraction: 0.95),
-                    children: [
-                      _buildTrackerSlide("Today"),
-                      _buildTrackerSlide("Yesterday"),
-                    ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 140,
+                    child: PageView(
+                      controller: PageController(viewportFraction: 0.95),
+                      children: [
+                        _buildTrackerSlide("Today"),
+                        _buildTrackerSlide("Yesterday"),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -298,14 +356,15 @@ class _MenuPageState extends State<MenuPage> {
       margin: const EdgeInsets.only(right: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(30),
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Colors.white10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("PRAYER TRACKER - $day", 
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.1)),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white70, letterSpacing: 1.1)),
           const Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -321,9 +380,9 @@ class _MenuPageState extends State<MenuPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(width: 6, height: 6, decoration: BoxDecoration(color: day == "Today" ? Colors.black : Colors.grey, shape: BoxShape.circle)),
+              Container(width: 6, height: 6, decoration: BoxDecoration(color: day == "Today" ? Colors.blue : Colors.grey, shape: BoxShape.circle)),
               const SizedBox(width: 4),
-              Container(width: 6, height: 6, decoration: BoxDecoration(color: day == "Yesterday" ? Colors.black : Colors.grey, shape: BoxShape.circle)),
+              Container(width: 6, height: 6, decoration: BoxDecoration(color: day == "Yesterday" ? Colors.blue : Colors.grey, shape: BoxShape.circle)),
             ],
           )
         ],
@@ -335,12 +394,12 @@ class _MenuPageState extends State<MenuPage> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFBCCBCF),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Icon(
         Icons.check_circle,
-        color: isDone ? const Color(0xFF062743) : Colors.white,
+        color: isDone ? const Color(0xFF3B82F6) : Colors.white24,
         size: 20,
       ),
     );
@@ -348,69 +407,166 @@ class _MenuPageState extends State<MenuPage> {
 
   Widget _buildHeader() {
     return Container(
-      height: 250,
-      width: double.infinity,
-      color: Colors.white,
-      child: Stack(
+      padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned(
-            bottom: 45,
-            left: 0,
-            right: 0,
-            child: Image.asset(
-              'assets/masjid_header.jpg',
-              fit: BoxFit.fitWidth,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
-            ),
-          ),
-          Center(
-            child: Text(
-              _timeString,
-              style: const TextStyle(
-                fontSize: 80,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    blurRadius: 15.0,
-                    color: Colors.black54,
-                    offset: Offset(2.0, 2.0),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              color: const Color(0xFF062743),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Row for App Title/Logo, Notifications, Settings
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("REMAIN TIME", style: TextStyle(color: Colors.white60, fontSize: 10)),
-                      Text(
-                        _nextPrayerName.isEmpty ? "--:--:--" : "$_nextPrayerName $_countdownString",
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ],
+                  const Text(
+                    "MusP",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(_dateString.toUpperCase(), style: const TextStyle(color: Colors.white60, fontSize: 10)),
-                      Text(_cityString, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ],
+                  const SizedBox(width: 5),
+                  Icon(Icons.explore_outlined, color: Colors.blue[400], size: 20),
+                ],
+              ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                    child: const Icon(Icons.notifications_outlined, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                    child: const Icon(Icons.settings_outlined, color: Colors.white, size: 20),
                   ),
                 ],
               ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          
+          // Subtitle
+          Text(
+            "$_dateString | Stay Notified. 🌙",
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          const SizedBox(height: 20),
+
+          // Location Selector card
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white10),
             ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.my_location, color: Colors.blue, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  _cityString,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 12),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.keyboard_arrow_down, color: Colors.white60, size: 16),
+              ],
+            ),
+          ),
+          const SizedBox(height: 25),
+
+          // Large digital clock
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  _timeString,
+                  style: const TextStyle(
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                if (_nextPrayerName.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    "Next: $_nextPrayerName in $_countdownString",
+                    style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 25),
+
+          // Active Prayer Banner
+          _buildActivePrayerBanner(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivePrayerBanner() {
+    final activeInfo = _getActivePrayerInfo();
+    final String name = activeInfo['name']!;
+    final String range = activeInfo['range']!;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2563EB),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                range,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.volume_up_outlined, color: Colors.white, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 15),
+              const Icon(Icons.more_vert, color: Colors.white, size: 20),
+            ],
           ),
         ],
       ),
@@ -421,22 +577,11 @@ class _MenuPageState extends State<MenuPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white10),
       ),
-      child: Column(
-        children: [
-          _buildMenuGrid(),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () => setState(() => isExpanded = !isExpanded),
-            child: Icon(
-              isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-              size: 40,
-            ),
-          ),
-        ],
-      ),
+      child: _buildMenuGrid(),
     );
   }
 
@@ -444,16 +589,14 @@ class _MenuPageState extends State<MenuPage> {
     final List<Map<String, dynamic>> allMenus = [
       {'title': 'Al-Quran', 'icon': Icons.menu_book},
       {'title': 'Asmaul Husna', 'icon': Icons.phonelink_setup},
+      {'title': 'Alif Ba Ta', 'icon': Icons.translate},
       {'title': 'Doa Harian', 'icon': Icons.auto_stories},
       {'title': 'Hadist', 'icon': Icons.menu_book_outlined},
       {'title': 'Waktu', 'icon': Icons.access_time},
       {'title': 'Kiblat', 'icon': Icons.explore},
       {'title': 'Calender', 'icon': Icons.calendar_month},
       {'title': 'Tasbih', 'icon': Icons.add_box},
-      {'title': 'Menu', 'icon': Icons.grid_view_rounded},
     ];
-
-    int itemCount = isExpanded ? allMenus.length : 6;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -464,7 +607,7 @@ class _MenuPageState extends State<MenuPage> {
         crossAxisSpacing: 10,
         childAspectRatio: 0.9,
       ),
-      itemCount: itemCount,
+      itemCount: allMenus.length,
       itemBuilder: (context, index) {
         final menu = allMenus[index];
         return GestureDetector(
@@ -476,6 +619,8 @@ class _MenuPageState extends State<MenuPage> {
               }
             } else if (title == 'Asmaul Husna') {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const AsmaulHusnaPage()));
+            } else if (title == 'Alif Ba Ta') {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AlifBaTaPage()));
             } else if (title == 'Doa Harian') {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const DoaPage()));
             } else if (title == 'Hadist') {
@@ -488,18 +633,23 @@ class _MenuPageState extends State<MenuPage> {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const CalendarPage()));
             } else if (title == 'Tasbih') {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const TasbihPage()));
-            } else if (title == 'Menu') {
-              setState(() => isExpanded = !isExpanded);
             }
           },
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(menu['icon'], size: 35, color: const Color(0xFF062743)),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(menu['icon'], size: 26, color: const Color(0xFF3B82F6)),
+              ),
               const SizedBox(height: 8),
               Text(menu['title'],
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white)),
             ],
           ),
         );
@@ -514,38 +664,76 @@ class _MenuPageState extends State<MenuPage> {
     final String magrib = todaySchedule['magrib'] ?? '17:51';
     final String isya = todaySchedule['isya'] ?? '19:01';
 
-    final List<Map<String, String>> prayers = [
-      {'name': 'Subuh', 'time': subuh, 'img': 'assets/gambar_subuh.jpg'},
-      {'name': 'Dzuhur', 'time': dzuhur, 'img': 'assets/gambar_dzuhur.jpg'},
-      {'name': 'Ashar', 'time': ashar, 'img': 'assets/gambar_ashar.jpg'},
-      {'name': 'Magrib', 'time': magrib, 'img': 'assets/gambar_magrib.jpg'},
-      {'name': 'Isya', 'time': isya, 'img': 'assets/gambar_isya.jpg'},
-    ];
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: prayers.map((p) => _prayerItem(p['name']!, p['time']!, p['img']!)).toList(),
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _prayerItem('Subuh', subuh, Icons.wb_twilight_outlined),
+          _prayerItem('Dzuhur', dzuhur, Icons.wb_sunny_outlined),
+          _prayerItem('Ashar', ashar, Icons.wb_cloudy_outlined),
+          _prayerItem('Magrib', magrib, Icons.wb_twilight),
+          _prayerItem('Isya', isya, Icons.nightlight_round_outlined),
+        ],
+      ),
     );
   }
 
-  Widget _prayerItem(String name, String time, String imagePath) {
+  Widget _prayerItem(String name, String time, IconData icon) {
     return Column(
       children: [
-        Text(name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+        Text(name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white70)),
         const SizedBox(height: 8),
         Container(
-          height: 55,
-          width: 55,
+          height: 45,
+          width: 45,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            image: DecorationImage(
-              image: AssetImage(imagePath),
-              fit: BoxFit.cover,
-            ),
+            color: Colors.white.withValues(alpha: 0.05),
+            border: Border.all(color: Colors.white10),
           ),
+          child: Icon(icon, color: Colors.amber, size: 20),
         ),
         const SizedBox(height: 8),
-        Text(time, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+        Text(time, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+      ],
+    );
+  }
+
+  Widget _buildExtraTimesRow() {
+    final String imsak = todaySchedule['imsak'] ?? '04:32';
+    final String terbit = todaySchedule['terbit'] ?? '05:59';
+    final String dhuha = todaySchedule['dhuha'] ?? '06:27';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _extraTimeCol("Imsak", imsak),
+          _extraTimeCol("Terbit", terbit),
+          _extraTimeCol("Dhuha", dhuha),
+        ],
+      ),
+    );
+  }
+
+  Widget _extraTimeCol(String label, String time) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11)),
+        const SizedBox(height: 4),
+        Text(time, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
       ],
     );
   }
