@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'asmaul_husna_page.dart';
 import 'doa_page.dart';
 import 'hadith_page.dart';
@@ -17,6 +20,151 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   bool isExpanded = false;
+  Timer? _timer;
+  String _timeString = "-- : --";
+  String _countdownString = "--:--:--";
+  String _nextPrayerName = "";
+  String _dateString = "";
+  String _cityString = "Cianjur, Indonesia";
+  final String _cityId = "1205"; // Default city ID for Cianjur in myquran API
+  Map<String, dynamic> todaySchedule = {};
+  bool isLoadingPrayer = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTodayPrayerTimes();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateTimeAndCountdown();
+    });
+    // Run once initially to avoid blank values before first tick
+    _updateTimeAndCountdown();
+  }
+
+  Future<void> _fetchTodayPrayerTimes() async {
+    final now = DateTime.now();
+    final year = now.year;
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+
+    try {
+      final response = await http.get(Uri.parse('https://api.myquran.com/v2/sholat/jadwal/$_cityId/$year/$month/$day'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['status'] == true && responseData['data'] != null) {
+          if (mounted) {
+            setState(() {
+              todaySchedule = responseData['data']['jadwal'] ?? {};
+              _cityString = "${responseData['data']['lokasi'] ?? 'CIANJUR'}, Indonesia";
+              isLoadingPrayer = false;
+            });
+            _updateTimeAndCountdown();
+          }
+        }
+      }
+    } catch (e) {
+      // Offline fallback
+      if (mounted) {
+        setState(() {
+          todaySchedule = _staticBackupSchedule;
+          _cityString = "Cianjur, Indonesia";
+          isLoadingPrayer = false;
+        });
+        _updateTimeAndCountdown();
+      }
+    }
+  }
+
+  void _updateTimeAndCountdown() {
+    final now = DateTime.now();
+    
+    // Clock update
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    // Pulsing colon
+    final colon = now.second % 2 == 0 ? " : " : "   ";
+    final timeStr = "$hour$colon$minute";
+
+    // Date update
+    final dateStr = _getFormattedDate(now);
+
+    // Countdown calculation
+    String nextName = "";
+    String countStr = "--:--:--";
+
+    if (todaySchedule.isNotEmpty) {
+      final List<MapEntry<String, DateTime>> prayerTimes = [];
+      final subuhTime = _parseTime(todaySchedule['subuh'], now);
+      final dzuhurTime = _parseTime(todaySchedule['dzuhur'], now);
+      final asharTime = _parseTime(todaySchedule['ashar'], now);
+      final magribTime = _parseTime(todaySchedule['magrib'], now);
+      final isyaTime = _parseTime(todaySchedule['isya'], now);
+
+      if (subuhTime != null) prayerTimes.add(MapEntry('Subuh', subuhTime));
+      if (dzuhurTime != null) prayerTimes.add(MapEntry('Dzuhur', dzuhurTime));
+      if (asharTime != null) prayerTimes.add(MapEntry('Ashar', asharTime));
+      if (magribTime != null) prayerTimes.add(MapEntry('Magrib', magribTime));
+      if (isyaTime != null) prayerTimes.add(MapEntry('Isya', isyaTime));
+
+      MapEntry<String, DateTime>? nextPrayer;
+      for (final prayer in prayerTimes) {
+        if (prayer.value.isAfter(now)) {
+          nextPrayer = prayer;
+          break;
+        }
+      }
+
+      // If past Isya, next is tomorrow's Subuh
+      if (nextPrayer == null && subuhTime != null) {
+        final tomorrowSubuh = subuhTime.add(const Duration(days: 1));
+        nextPrayer = MapEntry('Subuh', tomorrowSubuh);
+      }
+
+      if (nextPrayer != null) {
+        nextName = nextPrayer.key;
+        final diff = nextPrayer.value.difference(now);
+        final diffHours = diff.inHours.toString().padLeft(2, '0');
+        final diffMinutes = (diff.inMinutes % 60).toString().padLeft(2, '0');
+        final diffSeconds = (diff.inSeconds % 60).toString().padLeft(2, '0');
+        countStr = "$diffHours:$diffMinutes:$diffSeconds";
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _timeString = timeStr;
+        _dateString = dateStr;
+        _nextPrayerName = nextName;
+        _countdownString = countStr;
+      });
+    }
+  }
+
+  DateTime? _parseTime(String? timeStr, DateTime date) {
+    if (timeStr == null || !timeStr.contains(':')) return null;
+    final parts = timeStr.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    return DateTime(date.year, date.month, date.day, hour, minute);
+  }
+
+  String _getFormattedDate(DateTime date) {
+    final days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    final months = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    // weekday is 1 = Monday, 7 = Sunday. Sunday offset is 0.
+    final dayName = days[date.weekday % 7];
+    final monthName = months[date.month - 1];
+    return "$dayName, ${date.day} $monthName ${date.year}";
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,10 +291,21 @@ class _MenuPageState extends State<MenuPage> {
                   const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
             ),
           ),
-          const Center(
+          Center(
             child: Text(
-              "20 : 00",
-              style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold),
+              _timeString,
+              style: const TextStyle(
+                fontSize: 80,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    blurRadius: 15.0,
+                    color: Colors.black54,
+                    offset: Offset(2.0, 2.0),
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(
@@ -156,21 +315,24 @@ class _MenuPageState extends State<MenuPage> {
             child: Container(
               color: const Color(0xFF062743),
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("REMAIN TIME", style: TextStyle(color: Colors.white60, fontSize: 10)),
-                      Text("Magrib 0:50:35", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      const Text("REMAIN TIME", style: TextStyle(color: Colors.white60, fontSize: 10)),
+                      Text(
+                        _nextPrayerName.isEmpty ? "--:--:--" : "$_nextPrayerName $_countdownString",
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text("22 MEI, 2026", style: TextStyle(color: Colors.white60, fontSize: 10)),
-                      Text("Cianjur, Indonesia", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      Text(_dateString.toUpperCase(), style: const TextStyle(color: Colors.white60, fontSize: 10)),
+                      Text(_cityString, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
@@ -273,12 +435,18 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   Widget _buildPrayerTimesRow() {
+    final String subuh = todaySchedule['subuh'] ?? '04:42';
+    final String dzuhur = todaySchedule['dzuhur'] ?? '11:52';
+    final String ashar = todaySchedule['ashar'] ?? '15:10';
+    final String magrib = todaySchedule['magrib'] ?? '17:51';
+    final String isya = todaySchedule['isya'] ?? '19:01';
+
     final List<Map<String, String>> prayers = [
-      {'name': 'Subuh', 'time': '04:42', 'img': 'assets/gambar_subuh.jpg'},
-      {'name': 'Dzuhur', 'time': '11:52', 'img': 'assets/gambar_dzuhur.jpg'},
-      {'name': 'Ashar', 'time': '03:10', 'img': 'assets/gambar_ashar.jpg'},
-      {'name': 'Magrib', 'time': '05:51', 'img': 'assets/gambar_magrib.jpg'},
-      {'name': 'Isya', 'time': '07:01', 'img': 'assets/gambar_isya.jpg'},
+      {'name': 'Subuh', 'time': subuh, 'img': 'assets/gambar_subuh.jpg'},
+      {'name': 'Dzuhur', 'time': dzuhur, 'img': 'assets/gambar_dzuhur.jpg'},
+      {'name': 'Ashar', 'time': ashar, 'img': 'assets/gambar_ashar.jpg'},
+      {'name': 'Magrib', 'time': magrib, 'img': 'assets/gambar_magrib.jpg'},
+      {'name': 'Isya', 'time': isya, 'img': 'assets/gambar_isya.jpg'},
     ];
 
     return Row(
@@ -308,4 +476,16 @@ class _MenuPageState extends State<MenuPage> {
       ],
     );
   }
+
+  static const Map<String, String> _staticBackupSchedule = {
+    "tanggal": "Minggu, 14 Juni 2026",
+    "imsak": "04:32",
+    "subuh": "04:42",
+    "terbit": "05:59",
+    "dhuha": "06:27",
+    "dzuhur": "11:52",
+    "ashar": "15:10",
+    "magrib": "17:51",
+    "isya": "19:01"
+  };
 }
