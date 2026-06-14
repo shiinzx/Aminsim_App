@@ -6,94 +6,110 @@ class HistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0F1621), // Premium dark background
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0F1621),
         elevation: 0,
-        leading: const Icon(Icons.menu, color: Colors.black),
-        title: const Text("AMINSIM", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.search, color: Colors.black))],
+        title: const Text(
+          "HISTORY",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
-            // Header Tombol History
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF062743),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: const Text("HISTORY", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // 1. PRAYER TRACKER DETAILED
-            _buildDetailedTracker("Today, 22 Mei"),
+            // 1. PRAYER TRACKER DETAILED (Today)
+            _buildDetailedTracker("Today, 22 Mei", [true, true, true, false, false]),
             const SizedBox(height: 20),
-            _buildDetailedTracker("Yesterday, 21 Mei"),
             
-            const SizedBox(height: 30),
+            // 2. PRAYER TRACKER DETAILED (Yesterday)
+            _buildDetailedTracker("Yesterday, 21 Mei", [true, true, true, false, false]),
+            const SizedBox(height: 25),
 
-            // 2. LAST READ QURAN (Tambahan Desain)
+            // 3. LAST READ QURAN
             _buildHistoryCard(
               title: "Last Read Al-Quran",
               icon: Icons.menu_book,
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Al-Baqarah", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Halaman 12", style: TextStyle(color: Colors.grey)),
+                      const Text(
+                        "Al-Baqarah",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Halaman 12",
+                        style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                      ),
                     ],
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                  const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.amber),
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
 
-            // 3. DAILY DOA HISTORY
+            // 4. DAILY DOA HISTORY
             _buildHistoryCard(
               title: "Doa Harian",
               icon: Icons.auto_stories,
-              child: const Text("15 Doa telah dibaca hari ini", style: TextStyle(color: Colors.blueGrey)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      "15 Doa telah dibaca hari ini",
+                      style: TextStyle(color: Colors.grey[300], fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                  const Icon(Icons.check_circle, size: 20, color: Colors.amber),
+                ],
+              ),
             ),
             
-            const SizedBox(height: 100), // Space untuk BottomNav
+            const SizedBox(height: 100), // Space for bottom navigation bar
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDetailedTracker(String date) {
+  Widget _buildDetailedTracker(String date, List<bool> checklist) {
+    final prayers = ["Subuh", "Dzuhur", "Ashar", "Magrib", "Isya"];
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(30),
+        color: const Color(0xFF181F2B), // Dark card background
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("PRAYER TRACKER - $date", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-          const SizedBox(height: 15),
+          Row(
+            children: [
+              const Icon(Icons.track_changes, color: Colors.amber, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                "PRAYER TRACKER - ${date.toUpperCase()}",
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white70, letterSpacing: 0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _trackerIcon("Subuh", true),
-              _trackerIcon("Dzuhur", true),
-              _trackerIcon("Ashar", true),
-              _trackerIcon("Magrib", false),
-              _trackerIcon("Isya", false),
-            ],
+            children: List.generate(prayers.length, (i) {
+              final isDone = checklist[i];
+              return _trackerIcon(prayers[i], isDone);
+            }),
           ),
         ],
       ),
@@ -103,19 +119,36 @@ class HistoryPage extends StatelessWidget {
   Widget _trackerIcon(String label, bool isDone) {
     return Column(
       children: [
-        Icon(Icons.check_circle, color: isDone ? const Color(0xFF062743) : Colors.white, size: 30),
+        Icon(
+          isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+          color: isDone ? Colors.amber : Colors.white24,
+          size: 28,
+        ),
         const SizedBox(height: 8),
         Container(
-          width: 35, height: 18,
+          width: 32,
+          height: 16,
           decoration: BoxDecoration(
-            color: isDone ? const Color(0xFF062743) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFF062743)),
+            color: isDone ? Colors.amber.withValues(alpha: 0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: isDone ? Colors.amber : Colors.white24, width: 1),
           ),
-          child: Center(child: Container(width: 8, height: 8, decoration: BoxDecoration(color: isDone ? Colors.white : Colors.grey, shape: BoxShape.circle))),
+          child: Center(
+            child: Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: isDone ? Colors.amber : Colors.white24,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
         ),
-        const SizedBox(height: 5),
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white70),
+        ),
       ],
     );
   }
@@ -124,21 +157,23 @@ class HistoryPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: const Color(0xFF181F2B),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 20, color: const Color(0xFF062743)),
-              const SizedBox(width: 10),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Icon(icon, size: 18, color: Colors.amber),
+              const SizedBox(width: 8),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             ],
           ),
-          const Divider(height: 25),
+          const SizedBox(height: 12),
+          Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+          const SizedBox(height: 12),
           child,
         ],
       ),
