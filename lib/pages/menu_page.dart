@@ -42,27 +42,24 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   Future<Position?> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return null;
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         return null;
       }
-    }
-    
-    if (permission == LocationPermission.deniedForever) {
-      return null;
-    }
 
-    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return null;
+        }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        return null;
+      }
+
       return await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.low,
         timeLimit: const Duration(seconds: 5),
@@ -78,8 +75,13 @@ class _MenuPageState extends State<MenuPage> {
     final month = now.month.toString().padLeft(2, '0');
     final day = now.day.toString().padLeft(2, '0');
 
-    // Try to get GPS coordinates and resolve the nearest city
-    final Position? position = await _determinePosition();
+    Position? position;
+    try {
+      position = await _determinePosition();
+    } catch (e) {
+      position = null;
+    }
+
     if (position != null) {
       try {
         final url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.latitude}&lon=${position.longitude}&zoom=10';
@@ -92,12 +94,10 @@ class _MenuPageState extends State<MenuPage> {
           final address = geoData['address'] ?? {};
           String detectedCity = address['county'] ?? address['city'] ?? address['town'] ?? address['municipality'] ?? address['state_district'] ?? 'Cianjur';
           
-          // Clean the name: e.g. "Kabupaten Cianjur" -> "Cianjur"
           detectedCity = detectedCity
               .replaceAll(RegExp(r'(Kabupaten|Kab\.|Kota|Kecamatan|District)\s*', caseSensitive: false), '')
               .trim();
 
-          // Search the city ID on myquran
           final searchResponse = await http.get(Uri.parse('https://api.myquran.com/v2/sholat/kota/cari/$detectedCity'));
           if (searchResponse.statusCode == 200) {
             final searchData = json.decode(searchResponse.body);
@@ -108,11 +108,10 @@ class _MenuPageState extends State<MenuPage> {
           }
         }
       } catch (e) {
-        // Log or handle geo lookup failures silently, falling back to default city ID (Cianjur)
+        // Fallback silently to default city ID
       }
     }
 
-    // Load schedule for the resolved city ID
     try {
       final response = await http.get(Uri.parse('https://api.myquran.com/v2/sholat/jadwal/$_cityId/$year/$month/$day'));
       if (response.statusCode == 200) {
@@ -127,89 +126,102 @@ class _MenuPageState extends State<MenuPage> {
             _updateTimeAndCountdown();
           }
         }
+      } else {
+        _useFallbackSchedule();
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          todaySchedule = _staticBackupSchedule;
-          _cityString = "Cianjur, Indonesia";
-          isLoadingPrayer = false;
-        });
-        _updateTimeAndCountdown();
-      }
+      _useFallbackSchedule();
+    }
+  }
+
+  void _useFallbackSchedule() {
+    if (mounted) {
+      setState(() {
+        todaySchedule = _staticBackupSchedule;
+        _cityString = "Cianjur, Indonesia";
+        isLoadingPrayer = false;
+      });
+      _updateTimeAndCountdown();
     }
   }
 
   void _updateTimeAndCountdown() {
-    final now = DateTime.now();
-    
-    // Clock update
-    final hour = now.hour.toString().padLeft(2, '0');
-    final minute = now.minute.toString().padLeft(2, '0');
-    // Pulsing colon
-    final colon = now.second % 2 == 0 ? " : " : "   ";
-    final timeStr = "$hour$colon$minute";
+    try {
+      final now = DateTime.now();
+      
+      // Clock update
+      final hour = now.hour.toString().padLeft(2, '0');
+      final minute = now.minute.toString().padLeft(2, '0');
+      final colon = now.second % 2 == 0 ? " : " : "   ";
+      final timeStr = "$hour$colon$minute";
 
-    // Date update
-    final dateStr = _getFormattedDate(now);
+      // Date update
+      final dateStr = _getFormattedDate(now);
 
-    // Countdown calculation
-    String nextName = "";
-    String countStr = "--:--:--";
+      // Countdown calculation
+      String nextName = "";
+      String countStr = "--:--:--";
 
-    if (todaySchedule.isNotEmpty) {
-      final List<MapEntry<String, DateTime>> prayerTimes = [];
-      final subuhTime = _parseTime(todaySchedule['subuh'], now);
-      final dzuhurTime = _parseTime(todaySchedule['dzuhur'], now);
-      final asharTime = _parseTime(todaySchedule['ashar'], now);
-      final magribTime = _parseTime(todaySchedule['magrib'], now);
-      final isyaTime = _parseTime(todaySchedule['isya'], now);
+      if (todaySchedule.isNotEmpty) {
+        final List<MapEntry<String, DateTime>> prayerTimes = [];
+        final subuhTime = _parseTime(todaySchedule['subuh'], now);
+        final dzuhurTime = _parseTime(todaySchedule['dzuhur'], now);
+        final asharTime = _parseTime(todaySchedule['ashar'], now);
+        final magribTime = _parseTime(todaySchedule['magrib'], now);
+        final isyaTime = _parseTime(todaySchedule['isya'], now);
 
-      if (subuhTime != null) prayerTimes.add(MapEntry('Subuh', subuhTime));
-      if (dzuhurTime != null) prayerTimes.add(MapEntry('Dzuhur', dzuhurTime));
-      if (asharTime != null) prayerTimes.add(MapEntry('Ashar', asharTime));
-      if (magribTime != null) prayerTimes.add(MapEntry('Magrib', magribTime));
-      if (isyaTime != null) prayerTimes.add(MapEntry('Isya', isyaTime));
+        if (subuhTime != null) prayerTimes.add(MapEntry('Subuh', subuhTime));
+        if (dzuhurTime != null) prayerTimes.add(MapEntry('Dzuhur', dzuhurTime));
+        if (asharTime != null) prayerTimes.add(MapEntry('Ashar', asharTime));
+        if (magribTime != null) prayerTimes.add(MapEntry('Magrib', magribTime));
+        if (isyaTime != null) prayerTimes.add(MapEntry('Isya', isyaTime));
 
-      MapEntry<String, DateTime>? nextPrayer;
-      for (final prayer in prayerTimes) {
-        if (prayer.value.isAfter(now)) {
-          nextPrayer = prayer;
-          break;
+        MapEntry<String, DateTime>? nextPrayer;
+        for (final prayer in prayerTimes) {
+          if (prayer.value.isAfter(now)) {
+            nextPrayer = prayer;
+            break;
+          }
+        }
+
+        if (nextPrayer == null && subuhTime != null) {
+          final tomorrowSubuh = subuhTime.add(const Duration(days: 1));
+          nextPrayer = MapEntry('Subuh', tomorrowSubuh);
+        }
+
+        if (nextPrayer != null) {
+          nextName = nextPrayer.key;
+          final diff = nextPrayer.value.difference(now);
+          final diffHours = diff.inHours.toString().padLeft(2, '0');
+          final diffMinutes = (diff.inMinutes % 60).toString().padLeft(2, '0');
+          final diffSeconds = (diff.inSeconds % 60).toString().padLeft(2, '0');
+          countStr = "$diffHours:$diffMinutes:$diffSeconds";
         }
       }
 
-      if (nextPrayer == null && subuhTime != null) {
-        final tomorrowSubuh = subuhTime.add(const Duration(days: 1));
-        nextPrayer = MapEntry('Subuh', tomorrowSubuh);
+      if (mounted) {
+        setState(() {
+          _timeString = timeStr;
+          _dateString = dateStr;
+          _nextPrayerName = nextName;
+          _countdownString = countStr;
+        });
       }
-
-      if (nextPrayer != null) {
-        nextName = nextPrayer.key;
-        final diff = nextPrayer.value.difference(now);
-        final diffHours = diff.inHours.toString().padLeft(2, '0');
-        final diffMinutes = (diff.inMinutes % 60).toString().padLeft(2, '0');
-        final diffSeconds = (diff.inSeconds % 60).toString().padLeft(2, '0');
-        countStr = "$diffHours:$diffMinutes:$diffSeconds";
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        _timeString = timeStr;
-        _dateString = dateStr;
-        _nextPrayerName = nextName;
-        _countdownString = countStr;
-      });
+    } catch (e) {
+      // Safety wrapper
     }
   }
 
   DateTime? _parseTime(String? timeStr, DateTime date) {
-    if (timeStr == null || !timeStr.contains(':')) return null;
-    final parts = timeStr.split(':');
-    final hour = int.parse(parts[0]);
-    final minute = int.parse(parts[1]);
-    return DateTime(date.year, date.month, date.day, hour, minute);
+    try {
+      if (timeStr == null || !timeStr.contains(':')) return null;
+      final parts = timeStr.split(':');
+      final hour = int.parse(parts[0].trim());
+      final minute = int.parse(parts[1].trim());
+      return DateTime(date.year, date.month, date.day, hour, minute);
+    } catch (e) {
+      return null;
+    }
   }
 
   String _getFormattedDate(DateTime date) {
