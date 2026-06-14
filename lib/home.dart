@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'pages/menu_page.dart';
-import 'pages/sholat_page.dart';
 import 'pages/quran_page.dart';
-import 'pages/planner_page.dart';
+import 'pages/history_page.dart';
 import 'pages/more_page.dart';
+import 'pages/ai_chat_sheet.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -16,10 +16,9 @@ class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
 
   List<Widget> get _pages => [
-    MenuPage(onQuranTap: () => _onTap(2)), // Directs to Book tab
-    const SholatPage(),
+    MenuPage(onQuranTap: () => _onTap(1)), // Directs to Al-Quran tab
     const QuranPage(),
-    const PlannerPage(),
+    const HistoryPage(),
     const MorePage(),
   ];
 
@@ -27,32 +26,74 @@ class _MainPageState extends State<MainPage> {
     setState(() => _currentIndex = index);
   }
 
+  void _openAiChat() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AiChatBottomSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0F24),
+      backgroundColor: const Color(0xFF0F1621),
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,
       ),
-      bottomNavigationBar: Container(
-        height: 70,
-        decoration: const BoxDecoration(
-          color: Color(0xFF090F1E),
-          border: Border(
-            top: BorderSide(color: Colors.white10, width: 0.5),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openAiChat,
+        backgroundColor: const Color(0xFF1E293B),
+        shape: const CircleBorder(),
+        elevation: 5,
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.amber, width: 1.5),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1E3A8A), Color(0xFF0F172A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
+          child: const Icon(Icons.psychology, size: 28, color: Colors.amber),
         ),
-        child: SafeArea(
-          top: false,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        color: const Color(0xFF090F1E),
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        padding: EdgeInsets.zero,
+        child: SizedBox(
+          height: 60,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              navItem(Icons.home, Icons.home_outlined, "Home", 0),
-              navItem(Icons.access_time_filled, Icons.access_time_outlined, "Prayers", 1),
-              navItem(Icons.menu_book, Icons.menu_book_outlined, "Book", 2),
-              navItem(Icons.checklist, Icons.checklist_outlined, "Planner", 3),
-              navItem(Icons.person, Icons.person_outline, "Profile", 4),
+              // Left half
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _navItem(Icons.grid_view_rounded, "Menu", 0),
+                    _navItem(Icons.menu_book, "Al-Quran", 1),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 70), // Notch spacing
+              // Right half
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _navItem(Icons.history, "History", 2),
+                    _navItem(Icons.more_horiz, "More", 3),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -60,7 +101,7 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget navItem(IconData activeIcon, IconData inactiveIcon, String label, int index) {
+  Widget _navItem(IconData icon, String label, int index) {
     final isActive = _currentIndex == index;
 
     return GestureDetector(
@@ -68,17 +109,18 @@ class _MainPageState extends State<MainPage> {
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isActive ? activeIcon : inactiveIcon,
-            color: isActive ? const Color(0xFF3B82F6) : Colors.white70,
-            size: 24,
+            icon,
+            color: isActive ? Colors.amber : Colors.white60,
+            size: 22,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isActive ? const Color(0xFF3B82F6) : Colors.white70,
+              color: isActive ? Colors.amber : Colors.white60,
               fontSize: 10,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
