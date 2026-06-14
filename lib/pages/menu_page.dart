@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'asmaul_husna_page.dart';
+import 'doa_page.dart';
+import 'hadith_page.dart';
+import 'sholat_page.dart';
+import 'kiblat_page.dart';
+import 'tasbih_page.dart';
+import 'calendar_page.dart';
 
 class MenuPage extends StatefulWidget {
-  const MenuPage({super.key});
+  final VoidCallback? onQuranTap;
+  const MenuPage({super.key, this.onQuranTap});
 
   @override
   State<MenuPage> createState() => _MenuPageState();
@@ -223,15 +231,42 @@ class _MenuPageState extends State<MenuPage> {
       ),
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(allMenus[index]['icon'], size: 35),
-            const SizedBox(height: 8),
-            Text(allMenus[index]['title'],
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-          ],
+        final menu = allMenus[index];
+        return GestureDetector(
+          onTap: () {
+            final title = menu['title'];
+            if (title == 'Al-Quran') {
+              if (widget.onQuranTap != null) {
+                widget.onQuranTap!();
+              }
+            } else if (title == 'Asmaul Husna') {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AsmaulHusnaPage()));
+            } else if (title == 'Doa Harian') {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const DoaPage()));
+            } else if (title == 'Hadist') {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const HadithPage()));
+            } else if (title == 'Waktu') {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const SholatPage()));
+            } else if (title == 'Kiblat') {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const KiblatPage()));
+            } else if (title == 'Calender') {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const CalendarPage()));
+            } else if (title == 'Tasbih') {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const TasbihPage()));
+            } else if (title == 'Menu') {
+              setState(() => isExpanded = !isExpanded);
+            }
+          },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(menu['icon'], size: 35, color: const Color(0xFF062743)),
+              const SizedBox(height: 8),
+              Text(menu['title'],
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            ],
+          ),
         );
       },
     );

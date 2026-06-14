@@ -13,8 +13,8 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    MenuPage(),
+  List<Widget> get _pages => [
+    MenuPage(onQuranTap: () => _onTap(1)),
     QuranPage(),
     CenterPage(),
     HistoryPage(),
@@ -33,13 +33,11 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      extendBody: true,
 
-      body: Padding(
-        padding: EdgeInsets.only(bottom: 90),
-        child: IndexedStack(
-          index: _currentIndex,
-          children: _pages,
-        ),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
       ),
 
       bottomNavigationBar: SafeArea(

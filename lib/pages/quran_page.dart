@@ -176,7 +176,7 @@ class _QuranPageState extends State<QuranPage> with TickerProviderStateMixin {
 
   Widget _buildSurahList() {
     return ListView.builder(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
       itemCount: allSurahs.length,
       itemBuilder: (context, index) {
         final surah = allSurahs[index];
