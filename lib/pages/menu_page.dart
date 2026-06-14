@@ -240,45 +240,7 @@ class _MenuPageState extends State<MenuPage> {
     return "$dayName, ${date.day} $monthName ${date.year}";
   }
 
-  Map<String, String> _getActivePrayerInfo() {
-    final defaultInfo = {"name": "Dhuhur", "range": "11:52 - 15:10"};
-    if (todaySchedule.isEmpty) return defaultInfo;
 
-    try {
-      final now = DateTime.now();
-      final String subuh = todaySchedule['subuh'] ?? '04:42';
-      final String dzuhur = todaySchedule['dzuhur'] ?? '11:52';
-      final String ashar = todaySchedule['ashar'] ?? '15:10';
-      final String magrib = todaySchedule['magrib'] ?? '17:51';
-      final String isya = todaySchedule['isya'] ?? '19:01';
-
-      final tSubuh = _parseTime(subuh, now);
-      final tDzuhur = _parseTime(dzuhur, now);
-      final tAshar = _parseTime(ashar, now);
-      final tMagrib = _parseTime(magrib, now);
-      final tIsya = _parseTime(isya, now);
-
-      if (tSubuh == null || tDzuhur == null || tAshar == null || tMagrib == null || tIsya == null) {
-        return defaultInfo;
-      }
-
-      if (now.isBefore(tSubuh)) {
-        return {"name": "Isya", "range": "$isya - $subuh"};
-      } else if (now.isBefore(tDzuhur)) {
-        return {"name": "Subuh", "range": "$subuh - $tDzuhur"};
-      } else if (now.isBefore(tAshar)) {
-        return {"name": "Dzuhur", "range": "$dzuhur - $ashar"};
-      } else if (now.isBefore(tMagrib)) {
-        return {"name": "Ashar", "range": "$ashar - $magrib"};
-      } else if (now.isBefore(tIsya)) {
-        return {"name": "Magrib", "range": "$magrib - $isya"};
-      } else {
-        return {"name": "Isya", "range": "$isya - $subuh"};
-      }
-    } catch (e) {
-      return defaultInfo;
-    }
-  }
 
   @override
   void dispose() {
@@ -406,170 +368,155 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Row for App Title/Logo, Notifications, Settings
-          Row(
+    final parts = _timeString.split(':');
+    final displayTime = parts.length >= 2 ? "${parts[0]}:${parts[1]}" : "--:--";
+
+    return Column(
+      children: [
+        // Top Mosque Banner Card
+        Container(
+          width: double.infinity,
+          height: 180,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/mosque_silhouette.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: SafeArea(
+            child: Stack(
+              children: [
+                // Title & Controls Row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "MusP",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                            child: const Icon(Icons.notifications_outlined, color: Colors.white, size: 18),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                            child: const Icon(Icons.settings_outlined, color: Colors.white, size: 18),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Clock in the center
+                Center(
+                  child: Text(
+                    displayTime,
+                    style: const TextStyle(
+                      fontSize: 64,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 2,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black54,
+                          offset: Offset(0, 2),
+                          blurRadius: 10,
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Countdown & Location Bar (Status Bar)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          color: const Color(0xFF0F172A), // Dark blue/slate background matching mockup
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              // Left: Remain Time
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "MusP",
+                    "REMAIN TIME",
                     style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _nextPrayerName.isNotEmpty
+                        ? "$_nextPrayerName $_countdownString"
+                        : "Next prayer --:--",
+                    style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 5),
-                  Icon(Icons.explore_outlined, color: Colors.blue[400], size: 20),
                 ],
               ),
-              Row(
+              // Right: Date & Location
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                    child: const Icon(Icons.notifications_outlined, color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                    child: const Icon(Icons.settings_outlined, color: Colors.white, size: 20),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          
-          // Subtitle
-          Text(
-            "$_dateString | Stay Notified. 🌙",
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-          const SizedBox(height: 20),
-
-          // Location Selector card
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.my_location, color: Colors.blue, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  _cityString,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 12),
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.keyboard_arrow_down, color: Colors.white60, size: 16),
-              ],
-            ),
-          ),
-          const SizedBox(height: 25),
-
-          // Large digital clock
-          Center(
-            child: Column(
-              children: [
-                Text(
-                  _timeString,
-                  style: const TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                if (_nextPrayerName.isNotEmpty) ...[
-                  const SizedBox(height: 6),
                   Text(
-                    "Next: $_nextPrayerName in $_countdownString",
-                    style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
+                    _dateString.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.blue, size: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        _cityString,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 25),
-
-          // Active Prayer Banner
-          _buildActivePrayerBanner(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivePrayerBanner() {
-    final activeInfo = _getActivePrayerInfo();
-    final String name = activeInfo['name']!;
-    final String range = activeInfo['range']!;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2563EB),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          )
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                range,
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
             ],
           ),
-          Row(
-            children: [
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.volume_up_outlined, color: Colors.white, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              const SizedBox(width: 15),
-              const Icon(Icons.more_vert, color: Colors.white, size: 20),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -581,7 +528,24 @@ class _MenuPageState extends State<MenuPage> {
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white10),
       ),
-      child: _buildMenuGrid(),
+      child: Column(
+        children: [
+          _buildMenuGrid(),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                isExpanded = !isExpanded;
+              });
+            },
+            child: Icon(
+              isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              size: 32,
+              color: Colors.amber,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -589,14 +553,16 @@ class _MenuPageState extends State<MenuPage> {
     final List<Map<String, dynamic>> allMenus = [
       {'title': 'Al-Quran', 'icon': Icons.menu_book},
       {'title': 'Asmaul Husna', 'icon': Icons.phonelink_setup},
-      {'title': 'Alif Ba Ta', 'icon': Icons.translate},
       {'title': 'Doa Harian', 'icon': Icons.auto_stories},
       {'title': 'Hadist', 'icon': Icons.menu_book_outlined},
       {'title': 'Waktu', 'icon': Icons.access_time},
       {'title': 'Kiblat', 'icon': Icons.explore},
+      {'title': 'Alif Ba Ta', 'icon': Icons.translate},
       {'title': 'Calender', 'icon': Icons.calendar_month},
       {'title': 'Tasbih', 'icon': Icons.add_box},
     ];
+
+    int itemCount = isExpanded ? allMenus.length : 6;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -607,7 +573,7 @@ class _MenuPageState extends State<MenuPage> {
         crossAxisSpacing: 10,
         childAspectRatio: 0.9,
       ),
-      itemCount: allMenus.length,
+      itemCount: itemCount,
       itemBuilder: (context, index) {
         final menu = allMenus[index];
         return GestureDetector(
@@ -619,8 +585,6 @@ class _MenuPageState extends State<MenuPage> {
               }
             } else if (title == 'Asmaul Husna') {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const AsmaulHusnaPage()));
-            } else if (title == 'Alif Ba Ta') {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const AlifBaTaPage()));
             } else if (title == 'Doa Harian') {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const DoaPage()));
             } else if (title == 'Hadist') {
@@ -629,6 +593,8 @@ class _MenuPageState extends State<MenuPage> {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const SholatPage()));
             } else if (title == 'Kiblat') {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const KiblatPage()));
+            } else if (title == 'Alif Ba Ta') {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AlifBaTaPage()));
             } else if (title == 'Calender') {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const CalendarPage()));
             } else if (title == 'Tasbih') {
