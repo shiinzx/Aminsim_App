@@ -71,17 +71,17 @@ class _DoaPageState extends State<DoaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0F1621),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0F1621),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF062743)),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Doa Sehari-hari",
-          style: TextStyle(color: Color(0xFF062743), fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -93,114 +93,119 @@ class _DoaPageState extends State<DoaPage> {
             child: TextField(
               controller: _searchController,
               onChanged: _filterDoas,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "Search daily prayer...",
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                hintStyle: const TextStyle(color: Colors.white54),
+                prefixIcon: const Icon(Icons.search, color: Colors.white54),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: const BorderSide(color: Colors.white10),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: const BorderSide(color: Color(0xFF3B82F6)),
                 ),
               ),
             ),
           ),
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF062743))))
+                ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6))))
                 : errorMessage.isNotEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(errorMessage, style: const TextStyle(color: Colors.red)),
+                            Text(errorMessage, style: const TextStyle(color: Colors.redAccent)),
                             const SizedBox(height: 15),
                             ElevatedButton(
                               onPressed: fetchDoas,
-                              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF062743)),
+                              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)),
                               child: const Text("Retry", style: TextStyle(color: Colors.white)),
                             ),
                           ],
                         ),
                       )
                     : filteredDoas.isEmpty
-                        ? const Center(child: Text("No prayers match your search"))
+                        ? const Center(child: Text("No prayers match your search", style: TextStyle(color: Colors.white70)))
                         : ListView.builder(
                             padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
                             itemCount: filteredDoas.length,
                             itemBuilder: (context, index) {
                               final item = filteredDoas[index];
-                              return Card(
+                              return Container(
                                 margin: const EdgeInsets.only(bottom: 15),
-                                elevation: 2,
-                                shadowColor: Colors.black12,
-                                shape: RoundedRectangleBorder(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white10),
                                 ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.grey[100]!),
-                                  ),
-                                  child: Theme(
-                                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                                    child: ExpansionTile(
-                                      tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                                      title: Text(
-                                        item['doa'] ?? '',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF062743),
-                                          fontSize: 14,
+                                child: Theme(
+                                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                                  child: ExpansionTile(
+                                    tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                    iconColor: Colors.amber,
+                                    collapsedIconColor: Colors.white70,
+                                    title: Text(
+                                      item['doa'] ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                                    children: [
+                                      const Divider(height: 1, color: Colors.white10),
+                                      const SizedBox(height: 15),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Text(
+                                          item['ayat'] ?? '',
+                                          textAlign: TextAlign.right,
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            height: 1.6,
+                                          ),
                                         ),
                                       ),
-                                      childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                                      children: [
-                                        const Divider(height: 1),
-                                        const SizedBox(height: 15),
-                                        Align(
-                                          alignment: Alignment.centerRight,
-                                          child: Text(
-                                            item['ayat'] ?? '',
-                                            textAlign: TextAlign.right,
-                                            style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF062743),
-                                              height: 1.6,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 15),
-                                        if (item['latin'] != null && (item['latin'] as String).isNotEmpty) ...[
-                                          Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              item['latin'] ?? '',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontStyle: FontStyle.italic,
-                                                color: Colors.amber,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                        ],
+                                      const SizedBox(height: 15),
+                                      if (item['latin'] != null && (item['latin'] as String).isNotEmpty) ...[
                                         Align(
                                           alignment: Alignment.centerLeft,
                                           child: Text(
-                                            "Artinya:\n${item['terjemah'] ?? ''}",
+                                            item['latin'] ?? '',
                                             style: const TextStyle(
                                               fontSize: 12,
-                                              color: Colors.grey,
-                                              height: 1.4,
+                                              fontStyle: FontStyle.italic,
+                                              color: Colors.amber,
                                             ),
                                           ),
                                         ),
+                                        const SizedBox(height: 10),
                                       ],
-                                    ),
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          "Artinya:\n${item['terjemah'] ?? ''}",
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.white70,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               );

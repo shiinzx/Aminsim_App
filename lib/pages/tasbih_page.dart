@@ -39,7 +39,7 @@ class _TasbihPageState extends State<TasbihPage> {
       SnackBar(
         content: Text("Target $_target reached! Lap $_lapCount completed."),
         duration: const Duration(seconds: 2),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF3B82F6),
       ),
     );
   }
@@ -49,17 +49,17 @@ class _TasbihPageState extends State<TasbihPage> {
     double progress = _target == 0 ? 0.0 : (_counter / _target);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0F1621),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0F1621),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF062743)),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Tasbih Digital",
-          style: TextStyle(color: Color(0xFF062743), fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -106,8 +106,8 @@ class _TasbihPageState extends State<TasbihPage> {
                   child: CircularProgressIndicator(
                     value: progress,
                     strokeWidth: 8,
-                    backgroundColor: Colors.grey[100],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF062743)),
+                    backgroundColor: Colors.white.withValues(alpha: 0.05),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
                   ),
                 ),
                 GestureDetector(
@@ -117,10 +117,10 @@ class _TasbihPageState extends State<TasbihPage> {
                     height: 220,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
-                      border: Border.all(color: const Color(0xFFBCCBCF).withValues(alpha: 0.3), width: 4),
-                      boxShadow: const [
-                        BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 5))
+                      color: const Color(0xFF0F1621),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 4),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, 8))
                       ],
                     ),
                     child: Column(
@@ -131,14 +131,14 @@ class _TasbihPageState extends State<TasbihPage> {
                           style: const TextStyle(
                             fontSize: 60,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF062743),
+                            color: Colors.white,
                           ),
                         ),
                         Text(
                           _target == 0 ? "/ ∞" : "/ $_target",
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: Colors.white70,
                           ),
                         ),
                       ],
@@ -155,7 +155,7 @@ class _TasbihPageState extends State<TasbihPage> {
               icon: const Icon(Icons.refresh, color: Colors.white),
               label: const Text("Reset Counter", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF062743),
+                backgroundColor: const Color(0xFF3B82F6),
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
               ),
@@ -164,7 +164,7 @@ class _TasbihPageState extends State<TasbihPage> {
             const Text(
               "Tap the center circle to count. Tap targets above to switch limits.",
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 11),
+              style: TextStyle(color: Colors.white54, fontSize: 11),
             ),
           ],
         ),
@@ -185,14 +185,14 @@ class _TasbihPageState extends State<TasbihPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF062743) : Colors.grey[100],
+          color: isSelected ? const Color(0xFF3B82F6) : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? Colors.transparent : Colors.grey[300]!),
+          border: Border.all(color: isSelected ? Colors.transparent : Colors.white10),
         ),
         child: Text(
           label ?? "$value",
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black87,
+            color: isSelected ? Colors.white : Colors.white70,
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),

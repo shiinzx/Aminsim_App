@@ -91,17 +91,17 @@ class _CalendarPageState extends State<CalendarPage> {
     final currentHijriMonth = _hijriMonthsFor2026[_focusedDay.month] ?? "Hijri Calendar";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0F1621),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0F1621),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF062743)),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Kalender Islam",
-          style: TextStyle(color: Color(0xFF062743), fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -113,30 +113,44 @@ class _CalendarPageState extends State<CalendarPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF062743),
+                color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(25),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                border: Border.all(color: Colors.white10),
               ),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        onPressed: _previousMonth,
-                        icon: const Icon(Icons.chevron_left, color: Colors.white),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: GestureDetector(
+                          onTap: _previousMonth,
+                          child: const Icon(Icons.chevron_left, color: Colors.white),
+                        ),
                       ),
                       Text(
                         "${_months[_focusedDay.month - 1]} ${_focusedDay.year}",
                         style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                      IconButton(
-                        onPressed: _nextMonth,
-                        icon: const Icon(Icons.chevron_right, color: Colors.white),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: GestureDetector(
+                          onTap: _nextMonth,
+                          child: const Icon(Icons.chevron_right, color: Colors.white),
+                        ),
                       ),
                     ],
                   ),
-                  const Divider(color: Colors.white24, height: 20),
+                  const Divider(color: Colors.white10, height: 20),
                   Text(
                     currentHijriMonth,
                     style: const TextStyle(color: Colors.amber, fontSize: 14, fontWeight: FontWeight.bold),
@@ -155,7 +169,11 @@ class _CalendarPageState extends State<CalendarPage> {
                   child: Text(
                     day,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF062743), fontSize: 12),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: day == "Fri" ? Colors.amber : Colors.white70,
+                      fontSize: 12,
+                    ),
                   ),
                 );
               }).toList(),
@@ -183,12 +201,12 @@ class _CalendarPageState extends State<CalendarPage> {
                 return Container(
                   decoration: BoxDecoration(
                     color: isToday
-                        ? const Color(0xFF062743)
+                        ? const Color(0xFF3B82F6)
                         : isHoliday
-                            ? Colors.red.withValues(alpha: 0.1)
+                            ? Colors.red.withValues(alpha: 0.15)
                             : Colors.transparent,
                     shape: BoxShape.circle,
-                    border: isHoliday ? Border.all(color: Colors.red, width: 1) : null,
+                    border: isHoliday ? Border.all(color: Colors.redAccent, width: 1) : null,
                   ),
                   child: Center(
                     child: Column(
@@ -201,10 +219,10 @@ class _CalendarPageState extends State<CalendarPage> {
                             color: isToday
                                 ? Colors.white
                                 : isHoliday
-                                    ? Colors.red
+                                    ? Colors.redAccent
                                     : isCurrentMonth
-                                        ? Colors.black87
-                                        : Colors.grey[400],
+                                        ? Colors.white
+                                        : Colors.white24,
                             fontSize: 14,
                           ),
                         ),
@@ -221,7 +239,7 @@ class _CalendarPageState extends State<CalendarPage> {
               alignment: Alignment.centerLeft,
               child: Text(
                 "Islamic Holidays",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF062743)),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
               ),
             ),
             const SizedBox(height: 15),
@@ -233,12 +251,20 @@ class _CalendarPageState extends State<CalendarPage> {
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.white10),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today, size: 16, color: Colors.amber),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF3B82F6)),
+                    ),
                     const SizedBox(width: 15),
                     Expanded(
                       child: Column(
@@ -246,11 +272,11 @@ class _CalendarPageState extends State<CalendarPage> {
                         children: [
                           Text(
                             entry.value,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF062743)),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
                           ),
                           Text(
                             "$day ${_months[month - 1]}",
-                            style: const TextStyle(color: Colors.grey, fontSize: 11),
+                            style: const TextStyle(color: Colors.white70, fontSize: 11),
                           ),
                         ],
                       ),

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'pages/menu_page.dart';
 import 'pages/quran_page.dart';
@@ -16,11 +17,11 @@ class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
 
   List<Widget> get _pages => [
-    MenuPage(onQuranTap: () => _onTap(1)), // Directs to Al-Quran tab
-    const QuranPage(),
-    const HistoryPage(),
-    const MorePage(),
-  ];
+        MenuPage(onQuranTap: () => _onTap(1)),
+        const QuranPage(),
+        const HistoryPage(),
+        const MorePage(),
+      ];
 
   void _onTap(int index) {
     setState(() => _currentIndex = index);
@@ -35,65 +36,96 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  // Returns the background color of the currently active page — no sekat
+  Color get _currentPageBg {
+    switch (_currentIndex) {
+      case 0:
+        return const Color(0xFF070B16); // MenuPage
+      case 1:
+        return const Color(0xFF0F1621); // QuranPage
+      case 2:
+        return const Color(0xFF0F1621); // HistoryPage
+      case 3:
+        return const Color(0xFF0F1621); // MorePage
+      default:
+        return const Color(0xFF0F1621);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1621),
+      backgroundColor: _currentPageBg,
+      extendBody: true, // Body extends behind bottom nav — no sekat!
+
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openAiChat,
-        backgroundColor: const Color(0xFF1E293B),
-        shape: const CircleBorder(),
-        elevation: 5,
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+
+      floatingActionButton: GestureDetector(
+        onTap: _openAiChat,
         child: Container(
-          width: 56,
-          height: 56,
+          width: 58,
+          height: 58,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.amber, width: 1.5),
             gradient: const LinearGradient(
-              colors: [Color(0xFF1E3A8A), Color(0xFF0F172A)],
+              colors: [Color(0xFFE8A020), Color(0xFFC07010)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.amber.withValues(alpha: 0.55),
+                blurRadius: 20,
+                spreadRadius: 3,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: const Icon(Icons.psychology, size: 28, color: Colors.amber),
+          child: const Icon(
+            Icons.lightbulb_outline,
+            size: 26,
+            color: Colors.white,
+          ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: const Color(0xFF090F1E),
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
-        padding: EdgeInsets.zero,
-        child: SizedBox(
-          height: 60,
+
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          height: 72,
+          decoration: BoxDecoration(
+            // Seamless: background matches the current page, with blur glass
+            color: _currentPageBg.withValues(alpha: 0.85),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.08),
+                width: 0.5,
+              ),
+            ),
+          ),
           child: Row(
             children: [
-              // Left half
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _navItem(Icons.grid_view_rounded, "Menu", 0),
-                    _navItem(Icons.menu_book, "Al-Quran", 1),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 70), // Notch spacing
-              // Right half
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _navItem(Icons.history, "History", 2),
-                    _navItem(Icons.more_horiz, "More", 3),
-                  ],
-                ),
-              ),
+              // Left: Menu
+              Expanded(child: _navItem(Icons.grid_view_rounded, "Menu", 0)),
+              // Left-center: Al-Quran
+              Expanded(child: _navItem(Icons.menu_book_outlined, "Al-Quran", 1)),
+              // Center gap for FAB
+              const SizedBox(width: 72),
+              // Right-center: History
+              Expanded(child: _navItem(Icons.history_rounded, "History", 2)),
+              // Right: More
+              Expanded(child: _navItem(Icons.more_horiz, "More", 3)),
             ],
           ),
         ),
@@ -109,20 +141,23 @@ class _MainPageState extends State<MainPage> {
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: isActive ? Colors.amber : Colors.white60,
-            size: 22,
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              icon,
+              size: 23,
+              color: isActive ? Colors.amber : Colors.white38,
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             label,
             style: TextStyle(
-              color: isActive ? Colors.amber : Colors.white60,
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontSize: 10.5,
+              color: isActive ? Colors.amber : Colors.white38,
+              fontWeight:
+                  isActive ? FontWeight.w700 : FontWeight.w400,
             ),
           ),
         ],

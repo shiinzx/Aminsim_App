@@ -18,9 +18,9 @@ class _KiblatPageState extends State<KiblatPage> {
     double relativeAngle = (_qiblaAngle - _heading) * (math.pi / 180);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0F24),
+      backgroundColor: const Color(0xFF0F1621),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0F24),
+        backgroundColor: const Color(0xFF0F1621),
         elevation: 0,
         leading: Navigator.canPop(context)
             ? IconButton(

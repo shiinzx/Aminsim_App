@@ -81,9 +81,9 @@ class _HadithPageState extends State<HadithPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0F24),
+      backgroundColor: const Color(0xFF0F1621),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0F24),
+        backgroundColor: const Color(0xFF0F1621),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
