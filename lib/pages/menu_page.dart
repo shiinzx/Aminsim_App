@@ -256,57 +256,75 @@ class _MenuPageState extends State<MenuPage> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF0F172A),
-            Color(0xFF070B16),
+            Color(0xFF0A0F24), // Premium dark blue
+            Color(0xFF030712), // Deep black-blue
           ],
         ),
       ),
-      child: Column(
+      child: Stack(
         children: [
-          _buildHeader(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildExpandableMenu(),
-                  const SizedBox(height: 25),
-                  const Text(
-                    "Jadwal Sholat",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPrayerTimesRow(),
-                  const SizedBox(height: 12),
-                  _buildExtraTimesRow(),
-                  const SizedBox(height: 25),
-                  const Text(
-                    "Prayer Tracker",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 140,
-                    child: PageView(
-                      controller: PageController(viewportFraction: 0.95),
-                      children: [
-                        _buildTrackerSlide("Today"),
-                        _buildTrackerSlide("Yesterday"),
-                      ],
-                    ),
-                  ),
-                ],
+          // Background Mosque Silhouette centered in the middle-upper area of screen background
+          Positioned(
+            top: 180,
+            left: 0,
+            right: 0,
+            child: Opacity(
+              opacity: 0.18, // transparent subtle silhouette matching first mockup image
+              child: Image.asset(
+                'assets/mosque_silhouette.png',
+                fit: BoxFit.cover,
+                height: 280,
               ),
             ),
+          ),
+          Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 120), // padding bottom for floating bar
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildExpandableMenu(),
+                      const SizedBox(height: 30),
+                      const Text(
+                        "Jadwal Sholat",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      _buildPrayerTimesRow(),
+                      const SizedBox(height: 15),
+                      _buildExtraTimesRow(),
+                      const SizedBox(height: 25),
+                      const Text(
+                        "Prayer Tracker",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 140,
+                        child: PageView(
+                          controller: PageController(viewportFraction: 0.95),
+                          children: [
+                            _buildTrackerSlide("Today"),
+                            _buildTrackerSlide("Yesterday"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -371,181 +389,148 @@ class _MenuPageState extends State<MenuPage> {
     final parts = _timeString.split(':');
     final displayTime = parts.length >= 2 ? "${parts[0]}:${parts[1]}" : "--:--";
 
-    return Column(
-      children: [
-        // Top Mosque Banner Card
-        Container(
-          width: double.infinity,
-          height: 180,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/mosque_silhouette.png'),
-              fit: BoxFit.cover,
-            ),
-          ),
-          child: SafeArea(
-            child: Stack(
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(
+          children: [
+            // Title & Controls Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Title & Controls Row
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "MusP",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
-                            child: const Icon(Icons.notifications_outlined, color: Colors.white, size: 18),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
-                            child: const Icon(Icons.settings_outlined, color: Colors.white, size: 18),
-                          ),
-                        ],
-                      ),
-                    ],
+                const Text(
+                  "AminSim", // Matching mockup exactly
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                // Clock in the center
-                Center(
-                  child: Text(
-                    displayTime,
-                    style: const TextStyle(
-                      fontSize: 64,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 2,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black54,
-                          offset: Offset(0, 2),
-                          blurRadius: 10,
-                        )
-                      ],
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                      child: const Icon(Icons.notifications_outlined, color: Colors.white, size: 18),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                      child: const Icon(Icons.settings_outlined, color: Colors.white, size: 18),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ),
-        ),
-        // Countdown & Location Bar (Status Bar)
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          color: const Color(0xFF0F172A), // Dark blue/slate background matching mockup
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Left: Remain Time
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "REMAIN TIME",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _nextPrayerName.isNotEmpty
-                        ? "$_nextPrayerName $_countdownString"
-                        : "Next prayer --:--",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 15),
+            // Clock in the center
+            Text(
+              displayTime,
+              style: const TextStyle(
+                fontSize: 60,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 2,
               ),
-              // Right: Date & Location
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    _dateString.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.location_on, color: Colors.blue, size: 12),
-                      const SizedBox(width: 4),
-                      Text(
-                        _cityString,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
+            ),
+            const SizedBox(height: 20),
+            // Countdown & Location Bar (Status Bar) - Transparent background, matches mockup
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Left: Remain Time
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "REMAIN TIME",
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _nextPrayerName.isNotEmpty
+                          ? "$_nextPrayerName $_countdownString"
+                          : "Next prayer --:--",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                // Right: Date & Location
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _dateString.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.location_on, color: Colors.blue, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          _cityString,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildExpandableMenu() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Column(
-        children: [
-          _buildMenuGrid(),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                isExpanded = !isExpanded;
-              });
-            },
-            child: Icon(
-              isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-              size: 32,
-              color: Colors.amber,
-            ),
+    return Column(
+      children: [
+        _buildMenuGrid(),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              isExpanded = !isExpanded;
+            });
+          },
+          child: Icon(
+            isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+            size: 32,
+            color: Colors.amber,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -605,12 +590,13 @@ class _MenuPageState extends State<MenuPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                  color: const Color(0xFF1E293B).withValues(alpha: 0.6), // dark blue-grey circle
                   shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
                 ),
-                child: Icon(menu['icon'], size: 26, color: const Color(0xFF3B82F6)),
+                child: Icon(menu['icon'], size: 24, color: const Color(0xFF60A5FA)), // light blue icon
               ),
               const SizedBox(height: 8),
               Text(menu['title'],
@@ -630,13 +616,8 @@ class _MenuPageState extends State<MenuPage> {
     final String magrib = todaySchedule['magrib'] ?? '17:51';
     final String isya = todaySchedule['isya'] ?? '19:01';
 
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white10),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -660,8 +641,8 @@ class _MenuPageState extends State<MenuPage> {
           width: 45,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.05),
-            border: Border.all(color: Colors.white10),
+            color: const Color(0xFF1E293B).withValues(alpha: 0.6),
+            border: Border.all(color: Colors.amber.withValues(alpha: 0.2), width: 1),
           ),
           child: Icon(icon, color: Colors.amber, size: 20),
         ),
@@ -672,25 +653,16 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   Widget _buildExtraTimesRow() {
-    final String imsak = todaySchedule['imsak'] ?? '04:32';
-    final String terbit = todaySchedule['terbit'] ?? '05:59';
-    final String dhuha = todaySchedule['dhuha'] ?? '06:27';
+    final String imsak = todaySchedule['imsak'] ?? '04:20';
+    final String dhuha = todaySchedule['dhuha'] ?? '05:26';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _extraTimeCol("Imsak", imsak),
-          _extraTimeCol("Terbit", terbit),
-          _extraTimeCol("Dhuha", dhuha),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _extraTimeCol("Imsak", imsak),
+        const SizedBox(width: 140), // Centered gap to avoid the FAB and its glow
+        _extraTimeCol("Dhuha", dhuha),
+      ],
     );
   }
 
@@ -699,19 +671,19 @@ class _MenuPageState extends State<MenuPage> {
       children: [
         Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11)),
         const SizedBox(height: 4),
-        Text(time, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+        Text(time, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
       ],
     );
   }
 
   static const Map<String, String> _staticBackupSchedule = {
     "tanggal": "Minggu, 14 Juni 2026",
-    "imsak": "04:32",
-    "subuh": "04:42",
+    "imsak": "04:20",
+    "subuh": "04:39",
     "terbit": "05:59",
-    "dhuha": "06:27",
-    "dzuhur": "11:52",
-    "ashar": "15:10",
+    "dhuha": "05:26",
+    "dzuhur": "11:55",
+    "ashar": "15:16",
     "magrib": "17:51",
     "isya": "19:01"
   };
